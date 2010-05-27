@@ -110,9 +110,15 @@ function query(param)
         table.insert(query, "fl=*,score")
     end
 
+    if param.facet ~= nil then
+        table.insert(query, "facet=true")
+        solr_facet_fields(query, param.facet.fields)
+
+        -- limit
+    end
+
     -- make it json
     table.insert(query, "wt=json")
-    table.insert(query, "debugQuery")
 
     local res, err = solr_request({ path = 'select?' .. join(query), code = 200 })
 
@@ -122,6 +128,23 @@ function query(param)
     end
 
     return res.response, nil, res.responseHeader
+end
+
+function solr_facet_fields(query, fields)
+    if fields == nil then
+        return
+    end
+
+    if base.type(fields) == 'string' then
+        table.insert(query, 'facet.field=' .. fields)
+        return
+    end
+
+    if base.type(fields) == 'table' then
+        for i,v in base.ipairs(fields) do
+            solr_facet_fields(query, v)
+        end
+    end
 end
 
 function post(param)
